@@ -2,16 +2,13 @@
 ## Trying to accomplish an example of GNN for recommendation systems in Pytorch Geometric
 
 ### ENVIRONMENT OF WORK
+conda create -n my-torch python=3.7 -y
 
-conda create -n gnn-pytorch
-
-conda activate gnn-pytorch
+conda activate my-pytorch
 
 conda install pytorch==1.8.0 -c pytorch
 
 conda install pyg -c pyg -c conda-forge
-
-conda install -y matplotlib
 
 
 ### SIMILAR ISSUES FOUND:
