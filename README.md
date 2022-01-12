@@ -4,7 +4,7 @@
 ### ENVIRONMENT OF WORK
 conda create -n my-torch python=3.7 -y
 
-conda activate my-pytorch
+conda activate my-torch
 
 conda install pytorch==1.8.0 -c pytorch
 

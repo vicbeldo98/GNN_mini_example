@@ -1,39 +1,27 @@
-# This file load the dataset and aims to create a model for recommendation (NOT FINISHED).
-from dataset import YelpDataset
-from torch_geometric.loader import DataLoader
-from torch_geometric.nn import GCNConv, TopKPooling, GatedGraphConv, SAGEConv, SGConv
-from torch_geometric.nn import global_mean_pool as gap, global_max_pool as gmp
-import torch.nn.functional as F
+# This file load the dataset and aims to create a model for recommendation (NOT FINISHED): 
+# DOCUMENTATION: https://pytorch-geometric.readthedocs.io/en/latest/notes/heterogeneous.html
+from heterogeneous_graph import YelpDataset
 import torch
-from sklearn.metrics import roc_auc_score
-import numpy as np
-
 
 dataset = YelpDataset(root="data/")
-batch_size = 256
-embed_dim = 128
-loader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
+data = dataset[0]
 
-'''model = Sequential('x, edge_index', [
-    (GCNConv(in_channels, 64), 'x, edge_index -> x'),
-    ReLU(inplace=True),
-    (GCNConv(64, 64), 'x, edge_index -> x'),
-    ReLU(inplace=True),
-    Linear(64, out_channels),
-])'''
+'''Automatically convert a homogenous GNN model to a heterogeneous GNN model by making use of torch_geometric.nn.to_hetero() 
+or torch_geometric.nn.to_hetero_with_bases()'''
 
-for data in loader:
-    edge_index_T = torch.stack([data.edge_index[1], data.edge_index[0]], dim=0)  # Transposed/Reversed graph.
+import torch_geometric.transforms as T
+from torch_geometric.nn import SAGEConv, to_hetero
 
-    num_customers = data.num_users
-    num_vendors = data.num_business
-    data.customer = torch.identity(num_customers)
-    data.vendor = torch.identity(num_vendors)
-    conv1 = SAGEConv((num_customers, num_vendors), 64)
-    new_vendor_x = conv1((data.customer, data.vendor), data.edge_index).relu()
-    conv2 = SAGEConv((num_vendors, num_customers), 64)
-    new_customer_x = conv2((data.vendor, data.customer), edge_index_T).relu()
+class GNN(torch.nn.Module):
+    def __init__(self, hidden_channels, out_channels):
+        super().__init__()
+        self.conv1 = SAGEConv((-1, -1), hidden_channels)
+        self.conv2 = SAGEConv((-1, -1), out_channels)
 
-    # Repeat with new_vendor_x and new_customer_x:
-    conv3 = SAGEConv((64, 64), 128)
-    new_vendor_x2 = conv3((new_customer_x, new_vendor_x), data.edge_index).relu()
+    def forward(self, x, edge_index):
+        x = self.conv1(x, edge_index).relu()
+        x = self.conv2(x, edge_index)
+        return x
+
+model = GNN(hidden_channels=64, out_channels=8)
+model = to_hetero(model, data.metadata(), aggr='sum')
