@@ -17,10 +17,8 @@ args = parser.parse_args()
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 path = osp.join(osp.dirname(osp.realpath(__file__)), 'data')
-print(path)
 dataset = MovieLens(path, model_name='all-MiniLM-L6-v2')
 data = dataset[0].to(device)
-print(data)
 
 # Add user node features for message passing:
 data['user'].x = torch.eye(data['user'].num_nodes, device=device)
@@ -31,7 +29,7 @@ data = T.ToUndirected()(data)
 del data['movie', 'rev_rates', 'user'].edge_label  # Remove "reverse" label.
 
 # Perform a link-level split into training, validation, and test edges:
-
+# genera tres grafos, de manera aleatoria: uno para train, otro para validación y otro para test
 train_data, val_data, test_data = T.RandomLinkSplit(
     num_val=0.1,
     num_test=0.1,
@@ -39,14 +37,12 @@ train_data, val_data, test_data = T.RandomLinkSplit(
     edge_types=[('user', 'rates', 'movie')],
     rev_edge_types=[('movie', 'rev_rates', 'user')],
 )(data)
-'''
-# We have an unbalanced dataset with many labels for rating 3 and 4, and very
-# few for 0 and 1. Therefore we use a weighted MSE loss.
-if args.use_weighted_loss:
-    weight = torch.bincount(train_data['user', 'movie'].edge_label)
-    weight = weight.max() / weight
-else:
-    weight = None
+
+# We have an unbalanced dataset with many labels for rating 3 and 4, and very few for 0 and 1. Therefore we use a weighted MSE loss.
+# Count the frequency of each value in an array of non-negative ints: https://pytorch.org/docs/stable/generated/torch.bincount.html
+weight = torch.bincount(train_data['user', 'movie'].edge_label)
+# Take the maximum number of appearences of a rate and normalize all with that number
+weight = weight.max() / weight
 
 
 def weighted_mse_loss(pred, target, weight=None):
@@ -131,5 +127,4 @@ for epoch in range(1, 301):
     train_rmse = test(train_data)
     val_rmse = test(val_data)
     test_rmse = test(test_data)
-    print(f'Epoch: {epoch:03d}, Loss: {loss:.4f}, Train: {train_rmse:.4f}, '
-          f'Val: {val_rmse:.4f}, Test: {test_rmse:.4f}')'''
+    print(f'Epoch: {epoch:03d}, Loss: {loss:.4f}, Train: {train_rmse:.4f}, 'f'Val: {val_rmse:.4f}, Test: {test_rmse:.4f}')
