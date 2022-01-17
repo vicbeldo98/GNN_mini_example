@@ -1,5 +1,4 @@
 import os.path as osp
-import argparse
 
 import torch
 from torch.nn import Linear
@@ -9,10 +8,7 @@ import torch_geometric.transforms as T
 from dataset import MovieLens
 from torch_geometric.nn import SAGEConv, to_hetero
 
-parser = argparse.ArgumentParser()
-parser.add_argument('--use_weighted_loss', action='store_true',
-                    help='Whether to use weighted MSE loss.')
-args = parser.parse_args()
+MODEL_PATH = osp.join(osp.dirname(osp.realpath(__file__)), 'model')
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
@@ -102,8 +98,14 @@ optimizer = torch.optim.Adam(model.parameters(), lr=0.01)
 def train():
     model.train()
     optimizer.zero_grad()
-    pred = model(train_data.x_dict, train_data.edge_index_dict,
-                 train_data['user', 'movie'].edge_label_index)
+
+    '''
+    train_data.x_dict = diccionario que contiene los embeddings iniciales tanto de los usuarios como de las peliculas
+    train_data.edge_index_dict = diccionario que contiene las conexiones entre los nodos (contiene los tipos de conexiones)
+    train_data['user', 'movie'].edge_label_index = diccionario que contiene las conexiones entre los nodos (contiene los tipos de conexiones)
+    '''
+
+    pred = model(train_data.x_dict, train_data.edge_index_dict, train_data['user', 'movie'].edge_label_index)
     target = train_data['user', 'movie'].edge_label
     loss = weighted_mse_loss(pred, target, weight)
     loss.backward()
@@ -114,17 +116,19 @@ def train():
 @torch.no_grad()
 def test(data):
     model.eval()
-    pred = model(data.x_dict, data.edge_index_dict,
-                 data['user', 'movie'].edge_label_index)
+    pred = model(data.x_dict, data.edge_index_dict, data['user', 'movie'].edge_label_index)
     pred = pred.clamp(min=0, max=5)
     target = data['user', 'movie'].edge_label.float()
     rmse = F.mse_loss(pred, target).sqrt()
     return float(rmse)
 
 
-for epoch in range(1, 301):
+'''for epoch in range(1, 301):
     loss = train()
     train_rmse = test(train_data)
     val_rmse = test(val_data)
     test_rmse = test(test_data)
     print(f'Epoch: {epoch:03d}, Loss: {loss:.4f}, Train: {train_rmse:.4f}, 'f'Val: {val_rmse:.4f}, Test: {test_rmse:.4f}')
+
+
+torch.save(model.state_dict(), MODEL_PATH)'''
