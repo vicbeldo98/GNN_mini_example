@@ -8,7 +8,7 @@ import torch_geometric.transforms as T
 from dataset import MovieLens
 from torch_geometric.nn import SAGEConv, to_hetero
 
-MODEL_PATH = osp.join(osp.dirname(osp.realpath(__file__)), 'model')
+MODEL_PATH = osp.join(osp.dirname(osp.realpath(__file__)), 'models/model')
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
@@ -123,12 +123,16 @@ def test(data):
     return float(rmse)
 
 
-'''for epoch in range(1, 301):
-    loss = train()
-    train_rmse = test(train_data)
-    val_rmse = test(val_data)
-    test_rmse = test(test_data)
-    print(f'Epoch: {epoch:03d}, Loss: {loss:.4f}, Train: {train_rmse:.4f}, 'f'Val: {val_rmse:.4f}, Test: {test_rmse:.4f}')
+def main():
+    for epoch in range(1, 301):
+        loss = train()
+        train_rmse = test(train_data)
+        val_rmse = test(val_data)
+        test_rmse = test(test_data)
+        print(f'Epoch: {epoch:03d}, Loss: {loss:.4f}, Train: {train_rmse:.4f}, 'f'Val: {val_rmse:.4f}, Test: {test_rmse:.4f}')
 
 
-torch.save(model.state_dict(), MODEL_PATH)'''
+    torch.save(model.state_dict(), MODEL_PATH)
+
+if __name__ == "__main__":
+    main()

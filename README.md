@@ -23,3 +23,13 @@ conda install -c conda-forge sentence-transformers
 ### SIMILAR ISSUES FOUND:
 
 https://github.com/pyg-team/pytorch_geometric/issues/1999
+
+### EXECUTE SCRIPT
+
+# Train the recommendation model
+
+python3 train.py
+
+# Recommend k movies to specific userId
+
+python3 recommend_k_movies.py -u 10 -n 6 (-u (userId), -n (number of movies to recommend))
